@@ -9,9 +9,6 @@ from collections import deque
 import read_files as read
 import configparser
 
-
-
-
 config = configparser.ConfigParser()
 config.read('ident.conf')
 StandforParser = config['Tool']['StandforParser']
