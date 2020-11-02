@@ -361,7 +361,7 @@ if __name__ == "__main__":
 
     file_dir = []
     for doc in os.listdir(raw_data_path):
-        if not doc.endswith(".txt") and not doc.endswith(".npy") and not doc.endswith(".xml") and not doc.endswith(".dct"):
+        if not doc.endswith(".txt") and not doc.endswith(".npy") and not doc.endswith(".xml") and not doc.endswith(".dct") and not doc.startswith('.'):
             file_dir.append(doc)
 
     split_output = False
