@@ -8,11 +8,21 @@ from collections import OrderedDict
 from collections import deque
 import read_files as read
 import configparser
+import ssl
 
+""" try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context 
+
+nltk.download() """
 config = configparser.ConfigParser()
 config.read('ident.conf')
 StandforParser = config['Tool']['StandforParser']
 StandforParser_jar = config['Tool']['StandforParser_jar']
+
 
 def tokenize_span(txt):
     #english_tokenizer = StanfordTokenizer('C:/Users/dongfangxu9/PycharmProjects/pos_tagger/stanford-postagger.jar',
@@ -68,6 +78,7 @@ def extract_xmltag_timeml(xml_file_dir,raw_text):
 
 def extract_xmltag_anafora(xml_file_dir,raw_text):
     delete_annotation = ["Event","Modifier","PreAnnotation","NotNormalizable"]
+    print('extract_xmltag_anafora - %s' % xml_file_dir)
     data = anafora.AnaforaData.from_file(xml_file_dir)
     posi_info_dict = dict()
     for annotation in data.annotations:

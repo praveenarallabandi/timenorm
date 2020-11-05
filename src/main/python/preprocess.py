@@ -147,22 +147,29 @@ def document_level_2_sentence_level(file_dir, raw_data_path, preprocessed_path,x
     char_vocab = defaultdict(float)
 
     for data_id in range(0, len(file_dir)):
-        raw_text_path = os.path.join(raw_data_path,file_dir[data_id],file_dir[data_id])
-        preprocessed_file_path = os.path.join(preprocessed_path,file_dir[data_id],file_dir[data_id])
-
+        #raw_text_path = os.path.join(raw_data_path,file_dir[data_id],file_dir[data_id])
+        #preprocessed_file_path = os.path.join(preprocessed_path,file_dir[data_id],file_dir[data_id])
+        raw_text_path = os.path.join(raw_data_path,file_dir[data_id])
+        preprocessed_file_path = os.path.join(preprocessed_path,file_dir[data_id])
 
         raw_text = read.readfrom_txt(raw_text_path)
         raw_text = process.text_normalize(raw_text)
+        #print('raw_text - %s' % raw_text)
         sent_span_list_file, max_len_file,char_vocab = split_by_sentence(raw_text,char_vocab)
-
+        #print('sent_span_list_file - %s, max_len_file - %s,char_vocab - %s ' % (sent_span_list_file, max_len_file, char_vocab))
         max_len_all +=max_len_file
         read.savein_json(preprocessed_file_path+"_sent",sent_span_list_file)
         if xml_path != "":
-            xml_file_path = os.path.join(xml_path, file_dir[data_id], file_dir[data_id] + file_format)
+            #xml_file_path = os.path.join(xml_path, file_dir[data_id], file_dir[data_id] + file_format)
+            xml_file_path = os.path.join(xml_path, file_dir[data_id] + file_format)
+            print('xml_file_path - %s' % xml_file_path)
+            #f = open(xml_file_path, "w+") # NEW LINE
+            #f.write(raw_text)
             posi_info_dict = process.extract_xmltag_anafora(xml_file_path, raw_text)
             sent_tag_list_file = xml_tag_in_sentence(sent_span_list_file, posi_info_dict)
             read.savein_json(preprocessed_file_path + "_tag", sent_tag_list_file)
 
+    print('max_len_all - %s' % max_len_all)
     max_len_all.sort(reverse=True)
     max_len_file_name = "/".join(preprocessed_path.split('/')[:-1])+"/max_len_sent"
     read.savein_json(max_len_file_name, max_len_all)
@@ -176,7 +183,8 @@ def features_extraction(raw_data_dir,preprocessed_path,model_path,data_folder = 
     total = 0
     for data_id in range(0, len(raw_data_dir)):
         print(raw_data_dir[data_id])
-        preprocessed_file_path = os.path.join(preprocessed_path, raw_data_dir[data_id], raw_data_dir[data_id])
+        #preprocessed_file_path = os.path.join(preprocessed_path, raw_data_dir[data_id], raw_data_dir[data_id]) - TODO
+        preprocessed_file_path = os.path.join(preprocessed_path, raw_data_dir[data_id])
         sent_span_list_file = read.readfrom_json(preprocessed_file_path+ "_sent")
         print(len(sent_span_list_file))
 
@@ -223,7 +231,8 @@ def output_encoding(raw_data_dir,preprocessed_path,model_path,data_folder="",act
     total_with_timex =0
     n_sent_total = 0
     for data_id in range(0, len(raw_data_dir)):
-        preprocessed_file_path = os.path.join(preprocessed_path, raw_data_dir[data_id], raw_data_dir[data_id])
+        #preprocessed_file_path = os.path.join(preprocessed_path, raw_data_dir[data_id], raw_data_dir[data_id]) - TODO
+        preprocessed_file_path = os.path.join(preprocessed_path, raw_data_dir[data_id])
         sent_span_list_file = read.readfrom_json(preprocessed_file_path+ "_sent")
         tag_span_list_file = read.readfrom_json(preprocessed_file_path + "_tag")
         n_sent = len(tag_span_list_file)
@@ -360,6 +369,7 @@ if __name__ == "__main__":
 # output_format = ".TimeNorm.gold.completed.xml"
 
     file_dir = []
+    print("raw_data_path "+ raw_data_path)
     for doc in os.listdir(raw_data_path):
         if not doc.endswith(".txt") and not doc.endswith(".npy") and not doc.endswith(".xml") and not doc.endswith(".dct") and not doc.startswith('.'):
             file_dir.append(doc)
@@ -378,9 +388,12 @@ if __name__ == "__main__":
         preprocessed = True
 
     if preprocessed == True:
-      document_level_2_sentence_level(file_dir, raw_data_path, preprocessed_path,xml_path,file_format = output_format )
+        print('[%s]' % ', '.join(map(str, file_dir)) + " : " + preprocessed_path + " : " + model_path)
+        document_level_2_sentence_level(file_dir, raw_data_path, preprocessed_path,xml_path,file_format = output_format )
 
 
+    print('PROCESSING MAIN....')
+    print('[%s]' % ', '.join(map(str, file_dir)) + " : " + preprocessed_path + " : " + model_path)  
     main(file_dir, preprocessed_path,model_path,encode_output = encode_output,split_output = split_output)
 
 
