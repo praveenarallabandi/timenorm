@@ -9,6 +9,7 @@ from collections import deque
 import read_files as read
 import configparser
 import ssl
+import xml.etree.ElementTree as ET
 
 """ try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -51,15 +52,26 @@ def tokenize_span(txt):
     return token_spans
 
 def addannotation_to_dict(posi_info_dict,annotation,raw_text):
+    print('Processing addannotation_to_dict - ')
+    print(annotation.spans[0][0])
+    #print(posi_info_dict)
     if annotation.spans[0][0] in posi_info_dict:
-            posi_info_dict[annotation.spans[0][0]].append(annotation.type)
+        print('IF - ')
+        print(annotation.spans[0][0])
+        posi_info_dict[annotation.spans[0][0]].append(annotation.type)
     else:
         anna_info = []
+        """ print('ELSE - ')
+        print(annotation.spans[0][0])
+        print(annotation.spans[0][1]) """
         terms = raw_text[annotation.spans[0][0]:annotation.spans[0][1]]
+        print(terms)
         anna_info.append(annotation.spans[0][1])
         anna_info.append(terms)
         anna_info.append(annotation.type)
         posi_info_dict[annotation.spans[0][0]] = anna_info
+    print('Returning addannotation_to_dict - ')
+    print(posi_info_dict)
     return posi_info_dict
 
 def extract_xmltag_timeml(xml_file_dir,raw_text):
@@ -77,11 +89,17 @@ def extract_xmltag_timeml(xml_file_dir,raw_text):
     return posi_info_dict
 
 def extract_xmltag_anafora(xml_file_dir,raw_text):
-    delete_annotation = ["Event","Modifier","PreAnnotation","NotNormalizable"]
+    delete_annotation = ["Event","Modifier","PreAnnotation","NotNormalizable","MAKEINSTANCE","TLINK", "SLINK"]
     print('extract_xmltag_anafora - %s' % xml_file_dir)
+    for child in ET.parse(xml_file_dir).getroot():
+        print(child.tag)
     data = anafora.AnaforaData.from_file(xml_file_dir)
+    #print('extract_xmltag_anafora - data - %s' % data)
     posi_info_dict = dict()
+    print('Before calling addannotation_to_dict - ')
+    print(raw_text)
     for annotation in data.annotations:
+        print('Processing Annotation - %s' % annotation)
         if annotation.type not in delete_annotation:
             posi_info_dict = addannotation_to_dict(posi_info_dict,annotation,raw_text)
     posi_info_dict = OrderedDict(sorted(posi_info_dict.items()))

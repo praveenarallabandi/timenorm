@@ -10,6 +10,7 @@ from random import randint
 import argparse
 import configparser
 import warnings
+import xml.etree.cElementTree as ET
 
 
 config = configparser.ConfigParser()
@@ -66,7 +67,10 @@ def xml_tag_in_sentence(sentences,posi_info_dict):
     tag_span = posi_info_dict.keys()
     tag_span = sorted(tag_span, key=int)
     i = 0
+    print('TAG_SPAN')
+    print('tag_span - '.join(map(str, tag_span)))
     for sent in sentences:
+        #print('Sentence - '.join(map(str, sent)))
         tag = list()
         if i < len(tag_span):
             if sent[2] < int(tag_span[i]):
@@ -89,6 +93,7 @@ def xml_tag_in_sentence(sentences,posi_info_dict):
         #print tag_list
     if len(sentences) != len(tag_list):
         raise Exception('The number of the sentences for tag_list and sentence_list should match.')
+    print('tag_list - '.join(map(str, tag_list)))
     return tag_list
 
 def get_idx_from_sent(padding_char,sent, word_idx_map, max_l,pad):
@@ -155,18 +160,21 @@ def document_level_2_sentence_level(file_dir, raw_data_path, preprocessed_path,x
         raw_text = read.readfrom_txt(raw_text_path)
         raw_text = process.text_normalize(raw_text)
         #print('raw_text - %s' % raw_text)
+        #print('raw_text AFTER NORMALIZE - %s' % raw_text)
         sent_span_list_file, max_len_file,char_vocab = split_by_sentence(raw_text,char_vocab)
         #print('sent_span_list_file - %s, max_len_file - %s,char_vocab - %s ' % (sent_span_list_file, max_len_file, char_vocab))
         max_len_all +=max_len_file
         read.savein_json(preprocessed_file_path+"_sent",sent_span_list_file)
         if xml_path != "":
-            #xml_file_path = os.path.join(xml_path, file_dir[data_id], file_dir[data_id] + file_format)
-            xml_file_path = os.path.join(xml_path, file_dir[data_id] + file_format)
+            xml_file_path = os.path.join(xml_path, file_dir[data_id], file_dir[data_id] + file_format)
+            #xml_file_path = os.path.join(xml_path, file_dir[data_id] + file_format)
             print('xml_file_path - %s' % xml_file_path)
-            #f = open(xml_file_path, "w+") # NEW LINE
-            #f.write(raw_text)
             posi_info_dict = process.extract_xmltag_anafora(xml_file_path, raw_text)
+            print('posi_info_dict - ')
+            for key, value in posi_info_dict.items() :
+                print (key, value)
             sent_tag_list_file = xml_tag_in_sentence(sent_span_list_file, posi_info_dict)
+            #print('sent_tag_list_file - %s' % sent_tag_list_file)
             read.savein_json(preprocessed_file_path + "_tag", sent_tag_list_file)
 
     print('max_len_all - %s' % max_len_all)
@@ -298,8 +306,6 @@ def main(file_dir,preprocessed_path,model_path,encode_output = True,split_output
     # folder_n = np.int(np.divide(file_n,20))
     # folder = list(map(lambda x: int(x), np.linspace(0, file_n, folder_n + 1)))
 
-
-
     if split_output == True:
         for version in range(folder_n):
             start = folder[version]
@@ -323,8 +329,6 @@ def main(file_dir,preprocessed_path,model_path,encode_output = True,split_output
             output_encoding(raw_data_dir_sub, preprocessed_path,model_path,activation="softmax",type="implicit_operator")
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process features and output encoding for time identification task.')
 
@@ -341,7 +345,7 @@ if __name__ == "__main__":
                         help='output path for all preprocessed files',required=True)
 
     parser.add_argument('-format',
-                        help='the format of annotation file',default=".TimeNorm.gold.completed.xml")
+                        help='the format of annotation file',default=".TimeML.gold.completed.xml")
 
     parser.add_argument('-processed',
                         help='whether to process raw texts',default="true")
@@ -388,7 +392,7 @@ if __name__ == "__main__":
         preprocessed = True
 
     if preprocessed == True:
-        print('[%s]' % ', '.join(map(str, file_dir)) + " : " + preprocessed_path + " : " + model_path)
+        print('[%s]' % ', '.join(map(str, file_dir)) + " : " + preprocessed_path + " : " + model_path + " : " + xml_path)
         document_level_2_sentence_level(file_dir, raw_data_path, preprocessed_path,xml_path,file_format = output_format )
 
 

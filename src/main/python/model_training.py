@@ -12,8 +12,15 @@ from keras.models import Model,load_model
 import keras.backend as K
 from keras.callbacks import ModelCheckpoint
 import os
+import ssl
+import tensorflow as tf
 
-
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context 
 
 def load_hdf5(filename,labels):
     data = list()
@@ -28,7 +35,7 @@ def load_hdf5(filename,labels):
     return data
 
 
-def trainging(storage, flair_path, sampleweights,char_x,trainy_interval,trainy_operator_ex,trainy_operator_im,
+def training(storage, flair_path, sampleweights,char_x,trainy_interval,trainy_operator_ex,trainy_operator_im,
             char_x_cv, cv_y_interval, cv_y_operator_ex, cv_y_operator_im,batchsize,epoch_size,
               gru_size1 =256,gru_size2 = 150):
 
@@ -95,13 +102,13 @@ def trainging(storage, flair_path, sampleweights,char_x,trainy_interval,trainy_o
                   metrics=['categorical_accuracy'],
                   sample_weight_mode="temporal")
 
-    model_flair = load_model(flair_path)
+    #model.summary()
+    """ model_flair = load_model(flair_path)
     model.layers[2].set_weights(model_flair.layers[2].get_weights())
     model.layers[1].set_weights(model_flair.layers[1].get_weights())
     model.layers[4].set_weights(model_flair.layers[4].get_weights())
-    model.layers[3].set_weights(model_flair.layers[3].get_weights())
+    model.layers[3].set_weights(model_flair.layers[3].get_weights()) """
 
-    print(model.summary())
     filepath = storage + "model/weights-improvement-{epoch:02d}.hdf5"
     checkpoint = ModelCheckpoint(filepath, verbose=0, save_best_only=False)
 
@@ -117,6 +124,7 @@ def trainging(storage, flair_path, sampleweights,char_x,trainy_interval,trainy_o
         hist = model.fit(x ={'character': char_x},
                          y={'dense_1': trainy_interval, 'dense_2': trainy_operator_ex,'dense_3': trainy_operator_im}, epochs=epoch_size,
                          batch_size=batchsize, callbacks=callbacks_list,sample_weight=sampleweights)
+                
     model.save(storage + '/model/model_result.hdf5')
     np.save(storage + '/model/epoch_history.npy', hist.history)
 
@@ -131,13 +139,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train a time entity identification model')
 
     parser.add_argument('-input',
-                        help='the direcotory of inputs', default="")
+                        help='the directory of inputs', default="")
 
     parser.add_argument('-dev_input',
-                        help='the direcotory of the development inputs', default="")
+                        help='the directory of the development inputs', default="")
 
     parser.add_argument('-output',
-                        help='the direcotory of outputs', default="")
+                        help='the directory of outputs', default="")
 
     args = parser.parse_args()
     input_path = args.input
@@ -166,11 +174,11 @@ if __name__ == "__main__":
     sampleweights = [sampleweights_interval,sampleweights_explicit_operator,sampleweights_implicit_operator]
 
 
-    epoch_size = 400
-    batchsize = 128
+    epoch_size = 5
+    batchsize = 32
 
+    print('HERE...')
 
-
-    trainging(output_path,flair_path,sampleweights,char_x,trainy_interval,trainy_operator_ex,trainy_operator_im,
+    training(output_path,flair_path,sampleweights,char_x,trainy_interval,trainy_operator_ex,trainy_operator_im,
               char_x_cv, cv_y_interval, cv_y_operator_ex, cv_y_operator_im,batchsize,epoch_size,
               gru_size1 =256,gru_size2 = 150)

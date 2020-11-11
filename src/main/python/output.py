@@ -36,9 +36,20 @@ def sentence_length(texts):
 
 def generate_output_multiclass(sent_len,model,input,doc_list_sub, processed_path,output_pred_path,pred =True,data_folder = "",format_abbre = ".TimeNorm.system.completed.xml"):
     non_operator = read.textfile2list(non_operator_path)
+    print('non_operator')
+    print(non_operator)
     operator = read.textfile2list(operator_path)
+    print('operator')
+    print(operator)
     labels_index = [non_operator,operator,operator]
+    print('labels_index')
+    print(labels_index)
     classes, probs = output.make_prediction_function_multiclass(input, model, output_pred_path)
+    print('sent_len')
+    print(sent_len)
+    print('classes, probs - ')
+    print(classes)
+    #print(probs)
     if pred == True:
         np.save(output_pred_path + "/y_predict_classes"+data_folder, classes)
         read.savein_pickle(output_pred_path + "/y_predict_proba"+data_folder, probs)
@@ -47,7 +58,11 @@ def generate_output_multiclass(sent_len,model,input,doc_list_sub, processed_path
     int2labels = list()
     for index in range(len(classes)):
         class_loc = output.found_location_with_constraint(classes[index], sent_len)
+        print('class_loc')
+        print(class_loc)
         span = output.loc2span(class_loc, probs[index],post_process = False)
+        print('span')
+        print(span)
         spans.append(span)
 
         one_hot = read.counterList2Dict(list(enumerate(labels_index[index], 1)))
@@ -59,18 +74,38 @@ def generate_output_multiclass(sent_len,model,input,doc_list_sub, processed_path
     sent_index = 0
 
     for data_id in range(0,len(doc_list_sub)):
-        sent_spans = read.readfrom_json(os.path.join(processed_path,doc_list_sub[data_id],doc_list_sub[data_id]+"_sent"))
+        print('HERE %s', doc_list_sub[data_id])
+        print(os.path.join(processed_path,doc_list_sub[data_id]+"_sent"))
+        sent_spans = read.readfrom_json(os.path.join(processed_path,doc_list_sub[data_id]+"_sent"))
+        print('sent_spans %s', sent_spans)
         data_span = list()
         for sent_span in sent_spans:
+            """ print('sent_span - ')
+            print(sent_span)
+            posi_start = sent_span[1]
+            posi_end = sent_span[2]
+            label = sent_span[0]
+            print('posi_start:%s posi_end:%s, label:%s', (posi_start,posi_end,label))
+            data_span.append([posi_start-n_marks+sent_span[1],posi_end-n_marks+ sent_span[1],int2labels[index][label]]) """
+            print('classes - ', range(len(classes)))
             for index in range(len(classes)):
+                #print('index - ' + index + ':' + sent_index)
+                """ print(index)
+                print(sent_index) """
                 span_list = spans[index][sent_index]
+                #print('span_list - ')
+                #print(len(span_list[0]))
+                #print(span_list)
                 if len(span_list[0]) <1:
                     pass
                 else:
                     for [posi_start,posi_end,label] in span_list:
+                        print('posi_start:%s posi_end:%s, label:%s', (posi_start,posi_end,label))
                         data_span.append([posi_start-n_marks+sent_span[1],posi_end-n_marks+ sent_span[1],int2labels[index][label]])
             sent_index += 1
+        print('data_span - ', data_span)
         data = span2xmlfiles(data_span,doc_list_sub[data_id])
+        print('data %s', data)
         output_path = os.path.join(output_pred_path,doc_list_sub[data_id],doc_list_sub[data_id])
         read.create_folder(output_path)
         data.to_file(output_path+format_abbre)
@@ -100,12 +135,14 @@ def main(model_path,input_path,doc_list,raw_data_path, preocessed_path, output_p
         start = 0
         end = file_n
         doc_list_sub = doc_list[start:end]
+        print('INPUT PATH - ', input_path+"/input", ["char"])
         input = read.load_hdf5(input_path+"/input", ["char"])[0]
+        print('INPUT - ', input)
         sent_len = sentence_length(input)
         generate_output_multiclass(sent_len, model, input,doc_list_sub,preocessed_path, output_pred_path,pred=pred,data_folder = "",format_abbre =output_format)
 
-    # if evaluate=="true":
-    #     output.evaluate(preocessed_path,output_pred_path,raw_data_path,doc_list,output_format)
+    #if evaluate=="true":
+    output.evaluate(preocessed_path,output_pred_path,raw_data_path,doc_list,output_format)
 
 
 
