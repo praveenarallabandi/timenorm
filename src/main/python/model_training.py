@@ -14,6 +14,7 @@ from keras.callbacks import ModelCheckpoint
 import os
 import ssl
 import tensorflow as tf
+import process_functions as output
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -35,7 +36,7 @@ def load_hdf5(filename,labels):
     return data
 
 
-def training(storage, flair_path, sampleweights,char_x,trainy_interval,trainy_operator_ex,trainy_operator_im,
+def training(preprocessed_path,output_pred_path,raw_data_path,doc_list,output_format, storage, flair_path, sampleweights,char_x,trainy_interval,trainy_operator_ex,trainy_operator_im,
             char_x_cv, cv_y_interval, cv_y_operator_ex, cv_y_operator_im,batchsize,epoch_size,
               gru_size1 =256,gru_size2 = 150):
 
@@ -128,6 +129,14 @@ def training(storage, flair_path, sampleweights,char_x,trainy_interval,trainy_op
     model.save(storage + '/model/model_result.hdf5')
     np.save(storage + '/model/epoch_history.npy', hist.history)
 
+    print('CALLING EVELUATE WITh PARAMS...')
+    print(preprocessed_path)
+    print(output_pred_path)
+    print(raw_data_path)
+    print(doc_list)
+    print(output_format)
+    output.evaluate(preprocessed_path,output_pred_path,raw_data_path,doc_list,output_format)
+
 if __name__ == "__main__":
 
     config = configparser.ConfigParser()
@@ -147,10 +156,29 @@ if __name__ == "__main__":
     parser.add_argument('-output',
                         help='the directory of outputs', default="")
 
+    parser.add_argument('-processed_path',
+                        help='specify the preprocessed path',default="")
+
+    parser.add_argument('-out',
+                        help='output path for all preprocessed files',required=True)
+
+    parser.add_argument('-raw',
+                        help='raw data path',required=True)
+
+    parser.add_argument('-format',
+                        help='output path for all preprocessed files',default=".TimeML.gold.completed.xml")
+
+
     args = parser.parse_args()
     input_path = args.input
     dev_input_path = args.dev_input
     output_path = args.output
+
+    raw_data_path = args.raw
+    output_pred_path = args.out
+    preprocessed_path = args.processed_path
+    output_format = args.format
+
 
     char_x = load_hdf5(input_path + "/input", ["char"])[0]
     trainy_interval = load_hdf5(input_path + "/output_interval_softmax", ["interval_softmax"])[0]
@@ -174,11 +202,16 @@ if __name__ == "__main__":
     sampleweights = [sampleweights_interval,sampleweights_explicit_operator,sampleweights_implicit_operator]
 
 
-    epoch_size = 5
+    epoch_size = 1
     batchsize = 32
 
     print('HERE...')
 
-    training(output_path,flair_path,sampleweights,char_x,trainy_interval,trainy_operator_ex,trainy_operator_im,
+    doc_list = []
+    for doc in os.listdir(raw_data_path):
+        if not doc.endswith(".txt") and not doc.endswith(".npy") and not doc.endswith(".xml") and not doc.endswith(".dct"):
+            doc_list.append(doc)
+
+    training(preprocessed_path,output_pred_path,raw_data_path,doc_list,output_format, output_path,flair_path,sampleweights,char_x,trainy_interval,trainy_operator_ex,trainy_operator_im,
               char_x_cv, cv_y_interval, cv_y_operator_ex, cv_y_operator_im,batchsize,epoch_size,
               gru_size1 =256,gru_size2 = 150)

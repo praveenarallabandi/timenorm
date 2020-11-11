@@ -162,7 +162,7 @@ if __name__ == "__main__":
                         help='output path for all preprocessed files',required=True)
 
     parser.add_argument('-format',
-                        help='output path for all preprocessed files',default=".TimeNorm.gold.completed.xml")
+                        help='output path for all preprocessed files',default=".TimeML.gold.completed.xml")
 
     parser.add_argument('-mode',
                         help='Whether requried to save the output probability',default="false")

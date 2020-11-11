@@ -4,6 +4,7 @@ import numpy as np
 import preprocess_functions as process
 import tensorflow as tf
 import keras
+from collections import OrderedDict
 
 def prob2classes_multiclasses( prediction):
     print('prediction.shape')
@@ -118,11 +119,12 @@ def loc2span(loc,probs,post_process = False):
     return span_list
 
 def get_gold_dict(tag_file):
-    tag_dict = {}
+    tag_dict = dict()
     for sent_tag in tag_file:
         for start, tag in sent_tag:
             print(start,tag)
             tag_dict[start] =tag
+    tag_dict = OrderedDict(sorted(tag_dict.items()))
     return tag_dict
 
 def get_counts(tag_dict,type):
@@ -135,13 +137,21 @@ def get_counts(tag_dict,type):
     return count
 
 def calculate_score(gold,pred):
+    print('gold')
+    print(gold)
+    print('pred')
+    print(pred)
     gold_count= get_counts(gold,"gold")
     pred_count = get_counts(pred,"pred")
+    print('gold_count')
+    print(gold_count)
     print('pred_count')
     print(pred_count)
+
     true_count = 0
     for start, tag in pred.items():
-        if gold.has_key(start):
+        #if gold.has_key(start):
+        if start in gold:
             gold_tag = gold[start][2:]
             for tag_pre in tag[1:]:
                 if gold[start][0] == tag_pre[0]:
